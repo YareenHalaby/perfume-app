@@ -2,7 +2,7 @@ from fastapi import APIRouter ,Depends , HTTPException
 router = APIRouter()
 from pydantic import BaseModel
 from typing import Optional, List
-from services.servicesPerfume import get_perfume_from_db,add_perfume
+from services.servicesPerfume import get_perfume_from_db,add_perfume, update_perfume_data, deleted_perfumes , get_perfume_by_id
 from sqlalchemy.orm import Session 
 from dataBase import get_db 
 from schemas.schemasPerfume import PerfumeSchema
@@ -55,3 +55,27 @@ async def restore_perfume(perfume_id: int, db: Session = Depends(get_db)):
     print(f"perfume restored: {perfume}")
     
     return {"message": f"perfume with id {perfume_id} restored successfully"}
+
+
+
+@router.get("/{perfume_id}")
+async def get_perfume_by_id_route(perfume_id: int, db: Session = Depends(get_db)):
+    perfume = get_perfume_by_id(db, perfume_id)
+    
+    if not perfume:
+        raise HTTPException(status_code=404, detail="Perfume not found")
+    
+    return perfume
+
+
+@router.put("/{perfume_id}")
+async def update_perfume_route(
+    perfume_id: int, 
+    updated_perfume: PerfumeSchema, 
+    db: Session = Depends(get_db)
+):
+    # Call the service to update the perfume
+    updated_perfume = update_perfume_data(perfume_id, updated_perfume, db)
+    
+    # Return the updated perfume object along with a success message
+    return {"message": "Perfume updated successfully", "perfume": updated_perfume}
